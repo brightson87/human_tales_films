@@ -23,6 +23,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileAspect, setIsMobileAspect] = useState(false);
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [customDesktopId, setCustomDesktopId] = useState(desktopYoutubeId);
   const [customMobileId, setCustomMobileId] = useState(mobileYoutubeId);
   const [showSettings, setShowSettings] = useState(false);
@@ -42,6 +43,11 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 
   const activeVideoId = isMobileAspect ? customMobileId : customDesktopId;
 
+  // Reset visibility when active video ID changes
+  useEffect(() => {
+    setIsVideoVisible(false);
+  }, [activeVideoId]);
+
   // Initialize YouTube IFrame API for native playback control
   useEffect(() => {
     let playerInstance: any = null;
@@ -59,10 +65,18 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                 if (isAudioOn) event.target.unMute();
                 event.target.setPlaybackQuality("hd1080");
                 event.target.playVideo();
+                // Safety fallback to reveal video if onStateChange is delayed
+                setTimeout(() => {
+                  if (!isCancelled) setIsVideoVisible(true);
+                }, 1000);
               } catch {}
             },
             onStateChange: (event: any) => {
               if (isCancelled) return;
+              // 1 = PLAYING: Video is actively streaming frames -> reveal video smoothly
+              if (event.data === 1) {
+                setIsVideoVisible(true);
+              }
               // 0 = Ended, 2 = Paused (by browser navigation/throttling) -> auto resume immediately
               if (event.data === 0 || event.data === 2) {
                 try {
@@ -154,7 +168,9 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             src={embedUrl}
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
+            className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-700 ${
+              isVideoVisible ? "opacity-95" : "opacity-0"
+            }`}
             style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
           />
         )}
