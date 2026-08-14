@@ -13,19 +13,19 @@ interface YouTubeHeroBackgroundProps {
   desktopYoutubeId?: string;
   mobileYoutubeId?: string;
   isAudioOn?: boolean;
+  onVideoReady?: () => void;
 }
 
 export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   desktopYoutubeId = "_JNjJO9awho",
   mobileYoutubeId = "qsWbLRHe3cw",
   isAudioOn = false,
+  onVideoReady,
 }) => {
-  const [isMounted, setIsMounted] = useState(false);
   const [isMobileAspect, setIsMobileAspect] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    setIsMounted(true);
     const checkAspectRatio = () => {
       const isPortrait = window.innerHeight > window.innerWidth;
       setIsMobileAspect(isPortrait);
@@ -56,6 +56,10 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                 // Start playback immediately
                 event.target.playVideo();
 
+                if (onVideoReady) {
+                  onVideoReady();
+                }
+
                 // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {
                   if (!isCancelled) {
@@ -70,6 +74,9 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               if (isCancelled) return;
               // 1 = PLAYING: Video is streaming
               if (event.data === 1) {
+                if (onVideoReady) {
+                  onVideoReady();
+                }
                 try {
                   event.target.setPlaybackQuality("hd1080");
                 } catch {}
@@ -156,7 +163,14 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     } catch {}
   }, [isAudioOn]);
 
-  const originUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const [originUrl, setOriginUrl] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setOriginUrl(window.location.origin);
+    }
+  }, []);
+
   // Embed URL optimized for instant adaptive startup
   const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&fs=0&autohide=1${
     originUrl ? `&origin=${encodeURIComponent(originUrl)}` : ""
@@ -166,17 +180,16 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
       {/* Dynamic YouTube IFrame Container scaled to cover all viewports without letterbox */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]">
-        {isMounted && (
-          <iframe
-            id="hero-yt-iframe"
-            ref={iframeRef}
-            src={embedUrl}
-            title="Cinematic Hero Background Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
-            style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
-          />
-        )}
+        <iframe
+          id="hero-yt-iframe"
+          ref={iframeRef}
+          src={embedUrl}
+          suppressHydrationWarning
+          title="Cinematic Hero Background Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
+          style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
+        />
       </div>
 
       {/* Cinematic Overlays: Soft edge gradients for text legibility while keeping video bright and vivid */}

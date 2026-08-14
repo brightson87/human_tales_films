@@ -3,28 +3,50 @@
 import React, { useEffect, useState } from "react";
 
 interface PagePreloaderProps {
+  isVideoReady?: boolean;
   onComplete?: () => void;
 }
 
-export const PagePreloader: React.FC<PagePreloaderProps> = ({ onComplete }) => {
-  const [progress, setProgress] = useState(15);
+export const PagePreloader: React.FC<PagePreloaderProps> = ({
+  isVideoReady = false,
+  onComplete,
+}) => {
+  const [progress, setProgress] = useState(20);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isRemoved, setIsRemoved] = useState(false);
 
   useEffect(() => {
-    // Cinematic progress count (0 -> 100% in ~1.5 - 1.8s)
+    // Smooth progress tick while video initializes in the background
     const interval = setInterval(() => {
       setProgress((prev) => {
+        if (prev >= 90 && !isVideoReady) {
+          return 90; // Wait at 90% until video signal is ready
+        }
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        const increment = Math.floor(Math.random() * 10) + 6;
+        const increment = Math.floor(Math.random() * 12) + 8;
         return Math.min(prev + increment, 100);
       });
-    }, 110);
+    }, 100);
 
     return () => clearInterval(interval);
+  }, [isVideoReady]);
+
+  // When video signal fires (or on safety fallback), finish progress and dissolve preloader
+  useEffect(() => {
+    if (isVideoReady) {
+      setProgress(100);
+    }
+  }, [isVideoReady]);
+
+  // Safety fallback after 2.5s to ensure user is never blocked
+  useEffect(() => {
+    const safetyTimer = setTimeout(() => {
+      setProgress(100);
+    }, 2500);
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   useEffect(() => {
@@ -34,7 +56,7 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({ onComplete }) => {
         if (onComplete) onComplete();
         const removeTimer = setTimeout(() => setIsRemoved(true), 700);
         return () => clearTimeout(removeTimer);
-      }, 350);
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [progress, onComplete]);

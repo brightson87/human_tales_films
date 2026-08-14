@@ -27,6 +27,8 @@ export default function Home() {
   const [bookingModalMode, setBookingModalMode] = useState<"booking" | "hotline">("booking");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
+  const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
+
   // Toggle Audio in HUD
   const handleToggleAudio = () => {
     setIsAudioOn((prev) => !prev);
@@ -70,8 +72,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#060708] text-[#f2f4f6] relative overflow-hidden font-sans">
-      {/* Cinematic Studio Brand Preloader */}
-      <PagePreloader />
+      {/* Cinematic Studio Brand Preloader synced with background video */}
+      <PagePreloader isVideoReady={isHeroVideoReady} />
 
       {/* Viewfinder Camera Diagnostics HUD */}
       <CameraHUD isAudioOn={isAudioOn} onToggleAudio={handleToggleAudio} />
@@ -80,6 +82,7 @@ export default function Home() {
       <HeroSection
         isAudioOn={isAudioOn}
         onOpenMasterReel={handleOpenMasterReel}
+        onVideoReady={() => setIsHeroVideoReady(true)}
       />
 
       {/* Continuous Client Marquee */}

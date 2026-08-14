@@ -8,11 +8,13 @@ import { SITE_DATA } from "../data/siteData";
 interface HeroSectionProps {
   isAudioOn: boolean;
   onOpenMasterReel: () => void;
+  onVideoReady?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   isAudioOn,
   onOpenMasterReel,
+  onVideoReady,
 }) => {
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     e.preventDefault();
@@ -31,6 +33,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         desktopYoutubeId={SITE_DATA.hero.desktopYoutubeId}
         mobileYoutubeId={SITE_DATA.hero.mobileYoutubeId}
         isAudioOn={isAudioOn}
+        onVideoReady={onVideoReady}
       />
 
       {/* Top Viewfinder Crosshairs / Reticles */}
