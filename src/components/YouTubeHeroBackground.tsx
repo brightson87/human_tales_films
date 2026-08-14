@@ -58,36 +58,70 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     }
   };
 
-  // Listen for YouTube player state changes via postMessage
+  // Mute / Unmute smoothly without unmounting or reloading the iframe
+  useEffect(() => {
+    if (iframeRef.current?.contentWindow) {
+      const func = isAudioOn ? "unMute" : "mute";
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func, args: [] }),
+        "*"
+      );
+    }
+  }, [isAudioOn]);
+
+  // Helper to ensure continuous video playback
+  const triggerPlay = () => {
+    if (iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+        "*"
+      );
+    }
+  };
+
+  // Listen for YouTube player state changes and auto-resume on pauses
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
         if (data?.event === "onStateChange") {
-          // info 1 = PLAYING: Video is actively streaming frames and pause button icon has disappeared
+          // info 1 = PLAYING: Video is actively streaming frames
           if (data?.info === 1) {
             enforceFullHDQuality();
             setIsVideoLoaded(true);
+          } else if (data?.info === 2) {
+            // info 2 = PAUSED: Browser navigation/throttling attempted to pause -> auto resume
+            triggerPlay();
           } else if (data?.info === 0) {
             // info 0 = ENDED: Replay video from start to maintain continuous loop
-            iframeRef.current?.contentWindow?.postMessage(
-              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-              "*"
-            );
+            triggerPlay();
           }
         }
       } catch {
         // ignore non-json messages
       }
     };
+
+    // Resume video playback when returning from browser navigation or switching tabs
+    const handleResume = () => triggerPlay();
+
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    window.addEventListener("focus", handleResume);
+    window.addEventListener("popstate", handleResume);
+    window.addEventListener("hashchange", handleResume);
+    document.addEventListener("visibilitychange", handleResume);
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("focus", handleResume);
+      window.removeEventListener("popstate", handleResume);
+      window.removeEventListener("hashchange", handleResume);
+      document.removeEventListener("visibilitychange", handleResume);
+    };
   }, []);
 
   // Static safe embed URL without playlist param to avoid playlist next/prev buttons
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&mute=${
-    isAudioOn ? "0" : "1"
-  }&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
@@ -96,7 +130,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
         {isMounted && (
           <iframe
             ref={iframeRef}
-            key={`${activeVideoId}-${isAudioOn}`}
+            key={activeVideoId}
             src={embedUrl}
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -107,6 +141,12 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                 "*"
               );
               enforceFullHDQuality();
+              if (isAudioOn) {
+                iframeRef.current?.contentWindow?.postMessage(
+                  JSON.stringify({ event: "command", func: "unMute", args: [] }),
+                  "*"
+                );
+              }
 
               // Fallback safety trigger in case cross-origin postMessage is restricted
               setTimeout(() => {
