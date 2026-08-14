@@ -22,7 +22,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileAspect, setIsMobileAspect] = useState(false);
-  const [isVideoVisible, setIsVideoVisible] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -38,11 +37,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   }, []);
 
   const activeVideoId = isMobileAspect ? mobileYoutubeId : desktopYoutubeId;
-
-  // Reset visibility when active video ID changes
-  useEffect(() => {
-    setIsVideoVisible(false);
-  }, [activeVideoId]);
 
   // Initialize YouTube IFrame API for native playback control
   useEffect(() => {
@@ -61,7 +55,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                 if (isAudioOn) event.target.unMute();
                 // Start playback immediately
                 event.target.playVideo();
-                setIsVideoVisible(true);
 
                 // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {
@@ -75,9 +68,8 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             },
             onStateChange: (event: any) => {
               if (isCancelled) return;
-              // 1 = PLAYING: Video is actively streaming frames
+              // 1 = PLAYING: Video is streaming
               if (event.data === 1) {
-                setIsVideoVisible(true);
                 try {
                   event.target.setPlaybackQuality("hd1080");
                 } catch {}
@@ -174,9 +166,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             src={embedUrl}
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-700 ${
-              isVideoVisible ? "opacity-95" : "opacity-0"
-            }`}
+            className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
             style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
           />
         )}
