@@ -58,17 +58,23 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     }
   };
 
-  // Listen for YouTube ended state to loop single video without triggering playlist UI
+  // Listen for YouTube player state changes via postMessage
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        if (data?.event === "onStateChange" && data?.info === 0) {
-          // Video ended (0) -> replay from start
-          iframeRef.current?.contentWindow?.postMessage(
-            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-            "*"
-          );
+        if (data?.event === "onStateChange") {
+          // info 1 = PLAYING: Video is actively streaming frames and pause button icon has disappeared
+          if (data?.info === 1) {
+            enforceFullHDQuality();
+            setIsVideoLoaded(true);
+          } else if (data?.info === 0) {
+            // info 0 = ENDED: Replay video from start to maintain continuous loop
+            iframeRef.current?.contentWindow?.postMessage(
+              JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+              "*"
+            );
+          }
         }
       } catch {
         // ignore non-json messages
@@ -95,8 +101,17 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             onLoad={() => {
+              // Subscribe to YouTube player state events
+              iframeRef.current?.contentWindow?.postMessage(
+                JSON.stringify({ event: "listening" }),
+                "*"
+              );
               enforceFullHDQuality();
-              setIsVideoLoaded(true);
+
+              // Fallback safety trigger in case cross-origin postMessage is restricted
+              setTimeout(() => {
+                setIsVideoLoaded(true);
+              }, 1800);
             }}
             className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-700 ${
               isVideoLoaded ? "opacity-95" : "opacity-0"
