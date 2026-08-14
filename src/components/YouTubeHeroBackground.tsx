@@ -59,27 +59,23 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               try {
                 event.target.mute();
                 if (isAudioOn) event.target.unMute();
-                // Start playback immediately with adaptive fast buffer
+                // Start playback immediately
                 event.target.playVideo();
+                setIsVideoVisible(true);
 
-                // Smoothly upgrade quality to 1080p once the video starts streaming
+                // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {
                   if (!isCancelled) {
                     try {
                       event.target.setPlaybackQuality("hd1080");
                     } catch {}
                   }
-                }, 1200);
-
-                // Quick safety reveal if onStateChange is delayed
-                setTimeout(() => {
-                  if (!isCancelled) setIsVideoVisible(true);
-                }, 600);
+                }, 1000);
               } catch {}
             },
             onStateChange: (event: any) => {
               if (isCancelled) return;
-              // 1 = PLAYING: Video is actively streaming frames -> reveal video smoothly
+              // 1 = PLAYING: Video is actively streaming frames
               if (event.data === 1) {
                 setIsVideoVisible(true);
                 try {
