@@ -59,12 +59,22 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               try {
                 event.target.mute();
                 if (isAudioOn) event.target.unMute();
-                event.target.setPlaybackQuality("hd1080");
+                // Start playback immediately with adaptive fast buffer
                 event.target.playVideo();
-                // Safety fallback to reveal video if onStateChange is delayed
+
+                // Smoothly upgrade quality to 1080p once the video starts streaming
+                setTimeout(() => {
+                  if (!isCancelled) {
+                    try {
+                      event.target.setPlaybackQuality("hd1080");
+                    } catch {}
+                  }
+                }, 1200);
+
+                // Quick safety reveal if onStateChange is delayed
                 setTimeout(() => {
                   if (!isCancelled) setIsVideoVisible(true);
-                }, 1000);
+                }, 600);
               } catch {}
             },
             onStateChange: (event: any) => {
@@ -72,6 +82,9 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               // 1 = PLAYING: Video is actively streaming frames -> reveal video smoothly
               if (event.data === 1) {
                 setIsVideoVisible(true);
+                try {
+                  event.target.setPlaybackQuality("hd1080");
+                } catch {}
               }
               // 0 = Ended, 2 = Paused (by browser navigation/throttling) -> auto resume immediately
               if (event.data === 0 || event.data === 2) {
@@ -149,7 +162,8 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   }, [isAudioOn]);
 
   const originUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080${
+  // Embed URL optimized for instant adaptive startup
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&fs=0&autohide=1${
     originUrl ? `&origin=${encodeURIComponent(originUrl)}` : ""
   }`;
 
