@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Sliders } from "lucide-react";
 
 declare global {
   interface Window {
@@ -24,9 +23,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileAspect, setIsMobileAspect] = useState(false);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
-  const [customDesktopId, setCustomDesktopId] = useState(desktopYoutubeId);
-  const [customMobileId, setCustomMobileId] = useState(mobileYoutubeId);
-  const [showSettings, setShowSettings] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -41,7 +37,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     return () => window.removeEventListener("resize", checkAspectRatio);
   }, []);
 
-  const activeVideoId = isMobileAspect ? customMobileId : customDesktopId;
+  const activeVideoId = isMobileAspect ? mobileYoutubeId : desktopYoutubeId;
 
   // Reset visibility when active video ID changes
   useEffect(() => {
@@ -182,82 +178,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 
       {/* Subtle Camera Grid */}
       <div className="absolute inset-0 pointer-events-none opacity-10 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:4rem_4rem]" />
-
-      {/* Aspect Ratio Status Indicator (Subtle Viewfinder HUD) */}
-      <div className="absolute bottom-6 left-6 z-20 pointer-events-auto hidden sm:flex items-center gap-3">
-        <div className="bg-[#0c0e10]/85 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded text-[11px] font-mono text-white/60 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#ff4d15] animate-ping" />
-          <span>
-            FEED: {isMounted && isMobileAspect ? "PORTRAIT (9:16)" : "CINEMA SCOPE (2.39:1)"}
-          </span>
-          <span className="text-white/20">|</span>
-          <span className="text-white/40">ID: {activeVideoId}</span>
-        </div>
-
-        {/* Video Settings Toggle for User */}
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="bg-[#0c0e10]/85 hover:bg-[#ff4d15]/20 hover:border-[#ff4d15]/60 backdrop-blur-md border border-white/10 text-white/60 hover:text-white p-1.5 rounded transition-all text-xs flex items-center gap-1 font-mono"
-          title="Configure YouTube Background Videos"
-        >
-          <Sliders size={12} />
-          <span>YT CONFIG</span>
-        </button>
-      </div>
-
-      {/* Interactive YouTube ID Config Drawer */}
-      {showSettings && (
-        <div className="absolute bottom-16 left-6 z-30 pointer-events-auto bg-[#0d0f12] border border-white/20 p-4 rounded-lg shadow-2xl w-80 font-mono text-xs text-white">
-          <div className="flex justify-between items-center mb-3">
-            <span className="text-[#ff4d15] font-bold tracking-wider uppercase">
-              YouTube Video Source
-            </span>
-            <button
-              onClick={() => setShowSettings(false)}
-              className="text-white/50 hover:text-white"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-white/60 mb-1 text-[10px] uppercase">
-                Desktop YouTube ID / URL
-              </label>
-              <input
-                type="text"
-                value={customDesktopId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const match = val.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/)([^?&]+)/);
-                  setCustomDesktopId(match ? match[1] : val);
-                }}
-                className="w-full bg-black/60 border border-white/15 px-2.5 py-1.5 rounded text-white text-xs focus:border-[#ff4d15] focus:outline-none"
-                placeholder="e.g. ScMzIvxBSi4"
-              />
-            </div>
-            <div>
-              <label className="block text-white/60 mb-1 text-[10px] uppercase">
-                Mobile (Portrait) YouTube ID
-              </label>
-              <input
-                type="text"
-                value={customMobileId}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  const match = val.match(/(?:v=|\/embed\/|youtu\.be\/|\/v\/)([^?&]+)/);
-                  setCustomMobileId(match ? match[1] : val);
-                }}
-                className="w-full bg-black/60 border border-white/15 px-2.5 py-1.5 rounded text-white text-xs focus:border-[#ff4d15] focus:outline-none"
-                placeholder="e.g. lM02vNMRXFU"
-              />
-            </div>
-            <p className="text-[10px] text-white/40 leading-relaxed">
-              Accepts YouTube video IDs or full YouTube URLs. Automatically switches based on screen aspect ratio.
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
