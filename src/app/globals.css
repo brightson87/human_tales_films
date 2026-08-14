@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================================
+   HUMAN TALES FILMS - CINEMATIC PRODUCTION DESIGN SYSTEM
+   ========================================================================= */
+
+:root {
+  --font-bebas: "Bebas Neue", sans-serif;
+  --font-space: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Color Palette */
+  --bg-primary: #060708;
+  --bg-secondary: #0c0e10;
+  --bg-card: #111417;
+  --bg-card-hover: #171b1f;
+  --bg-hud: rgba(6, 7, 8, 0.85);
+
+  /* Accents */
+  --accent-orange: #ff4d15;
+  --accent-orange-bright: #ff622e;
+  --accent-orange-glow: rgba(255, 77, 21, 0.35);
+  --accent-gold: #e5a93b;
+
+  /* Text colors */
+  --text-primary: #f2f4f6;
+  --text-secondary: #9aa1a9;
+  --text-muted: #5e6670;
+  --text-dim: #383d44;
+
+  /* Borders & Dividers */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-orange: rgba(255, 77, 21, 0.4);
+
+  /* Viewfinder elements */
+  --hud-green: #22c55e;
+  --hud-red: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #060708;
+  color: #f2f4f6;
+  font-family: var(--font-space), -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #ff4d15;
+  color: #000;
+}
+
+body {
+  background-color: #060708;
+  color: #f2f4f6;
+  font-family: var(--font-space), -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+  position: relative;
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle Film Grain Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Base Typography Classes */
+.font-display {
+  font-family: var(--font-bebas), sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+.font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+.font-sans {
+  font-family: var(--font-space), sans-serif;
+}
+
+/* Section Header Tags (e.g., [ PORTFOLIO ARCHIVE ]) */
+.section-tag {
+  font-family: var(--font-mono), monospace;
+  color: #ff4d15;
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+  font-weight: 500;
+}
+
+.section-title {
+  font-family: var(--font-bebas), sans-serif;
+  font-size: clamp(2.8rem, 6.5vw, 5.2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 0.92;
+  color: #f2f4f6;
+  margin-bottom: 1.25rem;
+}
+
+/* Film Card */
+.film-card {
+  background: #111417;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.film-card:hover {
+  border-color: rgba(255, 77, 21, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 77, 21, 0.1);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #060708;
+}
+::-webkit-scrollbar-thumb {
+  background: #252a30;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4d15;
+}
+
+/* Blinking Animation for REC indicator */
+@keyframes recBlink {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+}
+
+.rec-pulse {
+  animation: recBlink 1.4s ease-in-out infinite;
+}
+
+/* Infinite Marquee Animation */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 32s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #ff4d15;
+  color: #ffffff;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.8rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: all 0.25s ease;
+  position: relative;
+  border-radius: 4px;
+}
+
+.btn-primary:hover {
+  background-color: #ff622e;
+  box-shadow: 0 0 24px rgba(255, 77, 21, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: #f2f4f6;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.95rem 1.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  transition: all 0.25s ease;
+  border-radius: 4px;
+}
+
+.btn-secondary:hover {
+  border-color: #ff4d15;
+  color: #ff4d15;
+  background: rgba(255, 77, 21, 0.05);
+}
