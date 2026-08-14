@@ -3,6 +3,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Sliders } from "lucide-react";
 
+declare global {
+  interface Window {
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
 interface YouTubeHeroBackgroundProps {
   desktopYoutubeId?: string;
   mobileYoutubeId?: string;
@@ -35,86 +42,106 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 
   const activeVideoId = isMobileAspect ? customMobileId : customDesktopId;
 
-  // Command the YouTube player to enforce 1080p (Full HD) minimum quality
-  const enforceFullHDQuality = () => {
-    if (iframeRef.current?.contentWindow) {
-      const commands = [
-        { event: "command", func: "setPlaybackQuality", args: ["hd1080"] },
-        { event: "command", func: "setPlaybackQualityRange", args: ["hd1080", "highres"] },
-      ];
-      commands.forEach((cmd) => {
-        try {
-          iframeRef.current?.contentWindow?.postMessage(JSON.stringify(cmd), "*");
-        } catch {
-          // ignore cross-origin postMessage errors
-        }
-      });
-    }
-  };
-
-  // Mute / Unmute smoothly without unmounting or reloading the iframe
+  // Initialize YouTube IFrame API for native playback control
   useEffect(() => {
-    if (iframeRef.current?.contentWindow) {
+    let playerInstance: any = null;
+    let isCancelled = false;
+
+    const initPlayer = () => {
+      if (!window.YT || !window.YT.Player) return;
+      try {
+        playerInstance = new window.YT.Player("hero-yt-iframe", {
+          events: {
+            onReady: (event: any) => {
+              if (isCancelled) return;
+              try {
+                event.target.mute();
+                if (isAudioOn) event.target.unMute();
+                event.target.setPlaybackQuality("hd1080");
+                event.target.playVideo();
+              } catch {}
+            },
+            onStateChange: (event: any) => {
+              if (isCancelled) return;
+              // 0 = Ended, 2 = Paused (by browser navigation/throttling) -> auto resume immediately
+              if (event.data === 0 || event.data === 2) {
+                try {
+                  event.target.playVideo();
+                } catch {}
+              }
+            },
+          },
+        });
+      } catch {}
+    };
+
+    // Load YouTube API script if not already present
+    if (!window.YT) {
+      const existingScript = document.getElementById("yt-iframe-api");
+      if (!existingScript) {
+        const tag = document.createElement("script");
+        tag.id = "yt-iframe-api";
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+      }
+      const prevCallback = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => {
+        if (prevCallback) prevCallback();
+        initPlayer();
+      };
+    } else {
+      initPlayer();
+    }
+
+    // Keep video playing when navigating back/forward, switching tabs, or resizing
+    const keepPlaying = () => {
+      try {
+        if (playerInstance?.playVideo) {
+          playerInstance.playVideo();
+        }
+        // Fallback postMessage
+        iframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+          "*"
+        );
+      } catch {}
+    };
+
+    window.addEventListener("focus", keepPlaying);
+    window.addEventListener("popstate", keepPlaying);
+    window.addEventListener("hashchange", keepPlaying);
+    window.addEventListener("pageshow", keepPlaying);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) keepPlaying();
+    });
+
+    return () => {
+      isCancelled = true;
+      window.removeEventListener("focus", keepPlaying);
+      window.removeEventListener("popstate", keepPlaying);
+      window.removeEventListener("hashchange", keepPlaying);
+      window.removeEventListener("pageshow", keepPlaying);
+      try {
+        if (playerInstance?.destroy) playerInstance.destroy();
+      } catch {}
+    };
+  }, [activeVideoId]);
+
+  // Handle audio state changes seamlessly
+  useEffect(() => {
+    try {
       const func = isAudioOn ? "unMute" : "mute";
-      iframeRef.current.contentWindow.postMessage(
+      iframeRef.current?.contentWindow?.postMessage(
         JSON.stringify({ event: "command", func, args: [] }),
         "*"
       );
-    }
+    } catch {}
   }, [isAudioOn]);
 
-  // Helper to ensure continuous video playback
-  const triggerPlay = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "playVideo", args: [] }),
-        "*"
-      );
-    }
-  };
-
-  // Listen for YouTube player state changes and auto-resume on pauses
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-        if (data?.event === "onStateChange") {
-          if (data?.info === 1) {
-            // PLAYING
-            enforceFullHDQuality();
-          } else if (data?.info === 2) {
-            // PAUSED -> auto resume
-            triggerPlay();
-          } else if (data?.info === 0) {
-            // ENDED -> Replay video from start to maintain continuous loop
-            triggerPlay();
-          }
-        }
-      } catch {
-        // ignore non-json messages
-      }
-    };
-
-    // Resume video playback when returning from browser navigation or switching tabs
-    const handleResume = () => triggerPlay();
-
-    window.addEventListener("message", handleMessage);
-    window.addEventListener("focus", handleResume);
-    window.addEventListener("popstate", handleResume);
-    window.addEventListener("hashchange", handleResume);
-    document.addEventListener("visibilitychange", handleResume);
-
-    return () => {
-      window.removeEventListener("message", handleMessage);
-      window.removeEventListener("focus", handleResume);
-      window.removeEventListener("popstate", handleResume);
-      window.removeEventListener("hashchange", handleResume);
-      document.removeEventListener("visibilitychange", handleResume);
-    };
-  }, []);
-
-  // Static safe embed URL without playlist param to avoid playlist next/prev buttons
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
+  const originUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?enablejsapi=1&autoplay=1&mute=1&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080${
+    originUrl ? `&origin=${encodeURIComponent(originUrl)}` : ""
+  }`;
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
@@ -122,25 +149,11 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]">
         {isMounted && (
           <iframe
+            id="hero-yt-iframe"
             ref={iframeRef}
-            key={activeVideoId}
             src={embedUrl}
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            onLoad={() => {
-              // Subscribe to YouTube player state events
-              iframeRef.current?.contentWindow?.postMessage(
-                JSON.stringify({ event: "listening" }),
-                "*"
-              );
-              enforceFullHDQuality();
-              if (isAudioOn) {
-                iframeRef.current?.contentWindow?.postMessage(
-                  JSON.stringify({ event: "command", func: "unMute", args: [] }),
-                  "*"
-                );
-              }
-            }}
             className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
             style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
           />
