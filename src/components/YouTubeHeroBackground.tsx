@@ -16,7 +16,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isMobileAspect, setIsMobileAspect] = useState(false);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [customDesktopId, setCustomDesktopId] = useState(desktopYoutubeId);
   const [customMobileId, setCustomMobileId] = useState(mobileYoutubeId);
   const [showSettings, setShowSettings] = useState(false);
@@ -35,11 +34,6 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   }, []);
 
   const activeVideoId = isMobileAspect ? customMobileId : customDesktopId;
-
-  // Reset video loaded state when active ID changes so control flash remains hidden
-  useEffect(() => {
-    setIsVideoLoaded(false);
-  }, [activeVideoId, isAudioOn]);
 
   // Command the YouTube player to enforce 1080p (Full HD) minimum quality
   const enforceFullHDQuality = () => {
@@ -85,15 +79,14 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
       try {
         const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
         if (data?.event === "onStateChange") {
-          // info 1 = PLAYING: Video is actively streaming frames
           if (data?.info === 1) {
+            // PLAYING
             enforceFullHDQuality();
-            setIsVideoLoaded(true);
           } else if (data?.info === 2) {
-            // info 2 = PAUSED: Browser navigation/throttling attempted to pause -> auto resume
+            // PAUSED -> auto resume
             triggerPlay();
           } else if (data?.info === 0) {
-            // info 0 = ENDED: Replay video from start to maintain continuous loop
+            // ENDED -> Replay video from start to maintain continuous loop
             triggerPlay();
           }
         }
@@ -126,7 +119,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
       {/* Dynamic YouTube IFrame Container scaled to cover all viewports without letterbox */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transition-opacity duration-700">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]">
         {isMounted && (
           <iframe
             ref={iframeRef}
@@ -147,15 +140,8 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                   "*"
                 );
               }
-
-              // Fallback safety trigger in case cross-origin postMessage is restricted
-              setTimeout(() => {
-                setIsVideoLoaded(true);
-              }, 1800);
             }}
-            className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-700 ${
-              isVideoLoaded ? "opacity-95" : "opacity-0"
-            }`}
+            className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
             style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
           />
         )}
