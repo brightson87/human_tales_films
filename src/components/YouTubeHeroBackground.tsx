@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Sliders } from "lucide-react";
 
 interface YouTubeHeroBackgroundProps {
@@ -20,6 +20,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   const [customDesktopId, setCustomDesktopId] = useState(desktopYoutubeId);
   const [customMobileId, setCustomMobileId] = useState(mobileYoutubeId);
   const [showSettings, setShowSettings] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -40,10 +41,27 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     setIsVideoLoaded(false);
   }, [activeVideoId, isAudioOn]);
 
-  // Static safe embed URL with strict parameters to eliminate controls & branding
+  // Command the YouTube player to enforce 1080p (Full HD) minimum quality
+  const enforceFullHDQuality = () => {
+    if (iframeRef.current?.contentWindow) {
+      const commands = [
+        { event: "command", func: "setPlaybackQuality", args: ["hd1080"] },
+        { event: "command", func: "setPlaybackQualityRange", args: ["hd1080", "highres"] },
+      ];
+      commands.forEach((cmd) => {
+        try {
+          iframeRef.current?.contentWindow?.postMessage(JSON.stringify(cmd), "*");
+        } catch {
+          // ignore cross-origin postMessage errors
+        }
+      });
+    }
+  };
+
+  // Static safe embed URL with strict parameters locking quality to hd1080 and eliminating UI
   const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&mute=${
     isAudioOn ? "0" : "1"
-  }&loop=1&playlist=${activeVideoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1`;
+  }&loop=1&playlist=${activeVideoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
@@ -51,15 +69,22 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transition-opacity duration-1000">
         {isMounted && (
           <iframe
+            ref={iframeRef}
             key={`${activeVideoId}-${isAudioOn}`}
             src={embedUrl}
             title="Cinematic Hero Background Video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             onLoad={() => {
-              // Delay fade-in until YouTube finishes initializing and hides initial overlay buttons
+              enforceFullHDQuality();
+              // Delay fade-in until YouTube finishes initializing and enforces 1080p quality
               setTimeout(() => {
+                enforceFullHDQuality();
                 setIsVideoLoaded(true);
               }, 1200);
+
+              // Periodic safeguard to maintain 1080p if player tries to downgrade
+              setTimeout(enforceFullHDQuality, 3000);
+              setTimeout(enforceFullHDQuality, 6000);
             }}
             className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-1000 ${
               isVideoLoaded ? "opacity-95" : "opacity-0"
