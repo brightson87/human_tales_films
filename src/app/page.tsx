@@ -14,6 +14,7 @@ import { CallToAction } from "../components/CallToAction";
 import { Footer } from "../components/Footer";
 import { VideoModal } from "../components/VideoModal";
 import { BookingModal } from "../components/BookingModal";
+import { PagePreloader } from "../components/PagePreloader";
 import { FilmProject, Director, SITE_DATA } from "../data/siteData";
 
 export default function Home() {
@@ -69,6 +70,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#060708] text-[#f2f4f6] relative overflow-hidden font-sans">
+      {/* Cinematic Studio Brand Preloader */}
+      <PagePreloader />
+
       {/* Viewfinder Camera Diagnostics HUD */}
       <CameraHUD isAudioOn={isAudioOn} onToggleAudio={handleToggleAudio} />
 
