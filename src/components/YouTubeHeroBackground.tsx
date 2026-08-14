@@ -58,15 +58,35 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     }
   };
 
-  // Static safe embed URL with strict parameters locking quality to hd1080 and eliminating UI
+  // Listen for YouTube ended state to loop single video without triggering playlist UI
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data?.event === "onStateChange" && data?.info === 0) {
+          // Video ended (0) -> replay from start
+          iframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ event: "command", func: "playVideo", args: [] }),
+            "*"
+          );
+        }
+      } catch {
+        // ignore non-json messages
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
+  // Static safe embed URL without playlist param to avoid playlist next/prev buttons
   const embedUrl = `https://www.youtube-nocookie.com/embed/${activeVideoId}?autoplay=1&mute=${
     isAudioOn ? "0" : "1"
-  }&loop=1&playlist=${activeVideoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
+  }&controls=0&showinfo=0&rel=0&iv_load_policy=3&disablekb=1&modestbranding=1&playsinline=1&enablejsapi=1&fs=0&autohide=1&vq=hd1080&suggestedQuality=hd1080`;
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
       {/* Dynamic YouTube IFrame Container scaled to cover all viewports without letterbox */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transition-opacity duration-1000">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] transition-opacity duration-700">
         {isMounted && (
           <iframe
             ref={iframeRef}
@@ -76,17 +96,9 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             onLoad={() => {
               enforceFullHDQuality();
-              // Delay fade-in until YouTube finishes initializing and completely clears all overlays
-              setTimeout(() => {
-                enforceFullHDQuality();
-                setIsVideoLoaded(true);
-              }, 2200);
-
-              // Periodic safeguard to maintain 1080p if player tries to downgrade
-              setTimeout(enforceFullHDQuality, 3500);
-              setTimeout(enforceFullHDQuality, 6500);
+              setIsVideoLoaded(true);
             }}
-            className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-1000 ${
+            className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-700 ${
               isVideoLoaded ? "opacity-95" : "opacity-0"
             }`}
             style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
