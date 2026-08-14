@@ -42,7 +42,7 @@ export const CameraHUD: React.FC<CameraHUDProps> = ({ isAudioOn, onToggleAudio }
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#060708]/85 backdrop-blur-md border-b border-white/10 text-white/90 text-xs font-mono select-none px-4 sm:px-6 lg:px-8 py-2.5 transition-all">
-      <div className="w-full flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+      <div className="w-full flex flex-row items-center justify-between gap-2 sm:gap-4">
         {/* Left: Viewfinder Camera Diagnostics */}
         <div className="flex items-center gap-3 text-[11px] md:text-xs tracking-wider">
           <div className="flex items-center gap-2">
