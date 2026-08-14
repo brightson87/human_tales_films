@@ -58,12 +58,8 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               try {
                 event.target.mute();
                 if (isAudioOn) event.target.unMute();
-                // Start playback immediately
+                // Start playback immediately behind preloader
                 event.target.playVideo();
-
-                if (onVideoReady) {
-                  onVideoReady();
-                }
 
                 // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {
