@@ -22,12 +22,17 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   isAudioOn = false,
   onVideoReady,
 }) => {
-  const [isMobileAspect, setIsMobileAspect] = useState(false);
+  const [isMobileAspect, setIsMobileAspect] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerHeight > window.innerWidth || window.innerWidth < 768;
+    }
+    return false;
+  });
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     const checkAspectRatio = () => {
-      const isPortrait = window.innerHeight > window.innerWidth;
+      const isPortrait = window.innerHeight > window.innerWidth || window.innerWidth < 768;
       setIsMobileAspect(isPortrait);
     };
 

@@ -41,11 +41,11 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({
     }
   }, [isVideoReady]);
 
-  // Safety fallback after 2.5s to ensure user is never blocked
+  // Safety fallback after 4.5s to ensure user is never permanently blocked
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       setProgress(100);
-    }, 2500);
+    }, 4500);
     return () => clearTimeout(safetyTimer);
   }, []);
 
