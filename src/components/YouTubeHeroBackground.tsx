@@ -61,6 +61,25 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                 // Start playback immediately behind preloader
                 event.target.playVideo();
 
+                // Poll to ensure mobile playback has actively begun
+                const checkReady = setInterval(() => {
+                  if (isCancelled) {
+                    clearInterval(checkReady);
+                    return;
+                  }
+                  try {
+                    const state = playerInstance?.getPlayerState?.();
+                    if (state === 1) {
+                      if (onVideoReady) onVideoReady();
+                      clearInterval(checkReady);
+                    } else {
+                      playerInstance?.playVideo?.();
+                    }
+                  } catch {}
+                }, 200);
+
+                setTimeout(() => clearInterval(checkReady), 6000);
+
                 // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {
                   if (!isCancelled) {
@@ -73,7 +92,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             },
             onStateChange: (event: any) => {
               if (isCancelled) return;
-              // 1 = PLAYING: Video is streaming
+              // 1 = PLAYING: Video is actively streaming frames
               if (event.data === 1) {
                 if (onVideoReady) {
                   onVideoReady();

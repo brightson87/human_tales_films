@@ -16,30 +16,40 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({
   const [isRemoved, setIsRemoved] = useState(false);
 
   useEffect(() => {
-    // Cinematic progress count (smooth 1.5 - 1.8s duration)
+    // Cinematic progress count
     const interval = setInterval(() => {
       setProgress((prev) => {
-        // If stream is still connecting, briefly hold at 90%
-        if (prev >= 90 && !isVideoReady) {
-          return 90;
-        }
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        const increment = Math.floor(Math.random() * 8) + 6;
-        return Math.min(prev + increment, 100);
+        const increment = Math.floor(Math.random() * 8) + 5;
+        const next = prev + increment;
+
+        // If stream is still buffering/loading, firmly hold at 90%
+        if (!isVideoReady && next >= 90) {
+          return 90;
+        }
+
+        return Math.min(next, 100);
       });
     }, 110);
 
     return () => clearInterval(interval);
   }, [isVideoReady]);
 
-  // Safety fallback after 4s to ensure page is never stuck
+  // When video signal is confirmed as active, advance progress to 100%
+  useEffect(() => {
+    if (isVideoReady) {
+      setProgress(100);
+    }
+  }, [isVideoReady]);
+
+  // Safety fallback after 4.5s to ensure page is never stuck
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       setProgress(100);
-    }, 4000);
+    }, 4500);
     return () => clearTimeout(safetyTimer);
   }, []);
 
