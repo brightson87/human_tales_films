@@ -74,8 +74,15 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                   event.target.setPlaybackQuality("hd1080");
                 } catch {}
               }
-              // 0 = Ended, 2 = Paused (by browser navigation/throttling) -> auto resume immediately
-              if (event.data === 0 || event.data === 2) {
+              // 0 = ENDED: Loop infinitely by resetting time to 0 and replaying
+              if (event.data === 0) {
+                try {
+                  event.target.seekTo(0);
+                  event.target.playVideo();
+                } catch {}
+              }
+              // 2 = PAUSED: Auto resume immediately if browser throttles
+              if (event.data === 2) {
                 try {
                   event.target.playVideo();
                 } catch {}
