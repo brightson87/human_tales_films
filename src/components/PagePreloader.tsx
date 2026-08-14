@@ -12,42 +12,51 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({
   onComplete,
 }) => {
   const [progress, setProgress] = useState(20);
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [isRemoved, setIsRemoved] = useState(false);
 
+  // Guarantee the cinematic brand intro displays for at least 1.5 seconds
   useEffect(() => {
-    // Cinematic progress count
+    const minTimer = setTimeout(() => {
+      setMinTimeElapsed(true);
+    }, 1500);
+    return () => clearTimeout(minTimer);
+  }, []);
+
+  // Smooth cinematic progress counter
+  useEffect(() => {
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        const increment = Math.floor(Math.random() * 8) + 5;
-        const next = prev + increment;
 
-        // If stream is still buffering/loading, firmly hold at 90%
-        if (!isVideoReady && next >= 90) {
+        // If minimum intro time hasn't passed OR video isn't ready yet, clamp at 90%
+        if ((!minTimeElapsed || !isVideoReady) && prev >= 90) {
           return 90;
         }
 
-        return Math.min(next, 100);
+        const increment = Math.floor(Math.random() * 8) + 6;
+        return Math.min(prev + increment, 100);
       });
-    }, 110);
+    }, 100);
 
     return () => clearInterval(interval);
-  }, [isVideoReady]);
+  }, [minTimeElapsed, isVideoReady]);
 
-  // When video signal is confirmed as active, advance progress to 100%
+  // When both minimum display time has passed and stream is ready, complete progress
   useEffect(() => {
-    if (isVideoReady) {
+    if (minTimeElapsed && isVideoReady) {
       setProgress(100);
     }
-  }, [isVideoReady]);
+  }, [minTimeElapsed, isVideoReady]);
 
-  // Safety fallback after 4.5s to ensure page is never stuck
+  // Safety fallback after 4.5s
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
+      setMinTimeElapsed(true);
       setProgress(100);
     }, 4500);
     return () => clearTimeout(safetyTimer);
