@@ -12,17 +12,17 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({ onComplete }) => {
   const [isRemoved, setIsRemoved] = useState(false);
 
   useEffect(() => {
-    // Fast cinematic progress count (0 -> 100% in ~600-800ms)
+    // Cinematic progress count (0 -> 100% in ~1.5 - 1.8s)
     const interval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
           clearInterval(interval);
           return 100;
         }
-        const increment = Math.floor(Math.random() * 25) + 15;
+        const increment = Math.floor(Math.random() * 10) + 6;
         return Math.min(prev + increment, 100);
       });
-    }, 120);
+    }, 110);
 
     return () => clearInterval(interval);
   }, []);
