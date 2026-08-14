@@ -76,15 +76,15 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             onLoad={() => {
               enforceFullHDQuality();
-              // Delay fade-in until YouTube finishes initializing and enforces 1080p quality
+              // Delay fade-in until YouTube finishes initializing and completely clears all overlays
               setTimeout(() => {
                 enforceFullHDQuality();
                 setIsVideoLoaded(true);
-              }, 1200);
+              }, 2200);
 
               // Periodic safeguard to maintain 1080p if player tries to downgrade
-              setTimeout(enforceFullHDQuality, 3000);
-              setTimeout(enforceFullHDQuality, 6000);
+              setTimeout(enforceFullHDQuality, 3500);
+              setTimeout(enforceFullHDQuality, 6500);
             }}
             className={`w-full h-full object-cover pointer-events-none scale-[1.25] border-0 transition-opacity duration-1000 ${
               isVideoLoaded ? "opacity-95" : "opacity-0"
