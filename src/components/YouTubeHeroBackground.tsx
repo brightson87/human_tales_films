@@ -22,15 +22,12 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   isAudioOn = false,
   onVideoReady,
 }) => {
-  const [isMobileAspect, setIsMobileAspect] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return window.innerHeight > window.innerWidth || window.innerWidth < 768;
-    }
-    return false;
-  });
+  const [isMobileAspect, setIsMobileAspect] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
+    setIsMounted(true);
     const checkAspectRatio = () => {
       const isPortrait = window.innerHeight > window.innerWidth || window.innerWidth < 768;
       setIsMobileAspect(isPortrait);
@@ -42,6 +39,8 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
   }, []);
 
   const activeVideoId = isMobileAspect ? mobileYoutubeId : desktopYoutubeId;
+
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   // Initialize YouTube IFrame API for native playback control
   useEffect(() => {
@@ -70,6 +69,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                   try {
                     const state = playerInstance?.getPlayerState?.();
                     if (state === 1) {
+                      setIsVideoPlaying(true);
                       if (onVideoReady) onVideoReady();
                       clearInterval(checkReady);
                     } else {
@@ -94,6 +94,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
               if (isCancelled) return;
               // 1 = PLAYING: Video is actively streaming frames
               if (event.data === 1) {
+                setIsVideoPlaying(true);
                 if (onVideoReady) {
                   onVideoReady();
                 }
@@ -200,15 +201,39 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none bg-[#060708]">
       {/* Dynamic YouTube IFrame Container scaled to cover all viewports without letterbox */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh]">
-        <iframe
-          id="hero-yt-iframe"
-          ref={iframeRef}
-          src={embedUrl}
-          suppressHydrationWarning
-          title="Cinematic Hero Background Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
-          style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
+        {isMounted && (
+          <iframe
+            id="hero-yt-iframe"
+            ref={iframeRef}
+            src={embedUrl}
+            suppressHydrationWarning
+            title="Cinematic Hero Background Video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            className="w-full h-full object-cover pointer-events-none scale-[1.25] border-0 opacity-95"
+            style={{ filter: "brightness(0.95) contrast(1.05) saturate(1.05)" }}
+          />
+        )}
+        
+        {/* Desktop High Quality Thumbnail Placeholder */}
+        <div 
+          className={`hidden md:block absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-1000 scale-[1.25] ${
+            isVideoPlaying ? "opacity-0 pointer-events-none" : "opacity-95"
+          }`}
+          style={{ 
+            backgroundImage: `url(https://img.youtube.com/vi/${desktopYoutubeId}/maxresdefault.jpg)`,
+            filter: "brightness(0.95) contrast(1.05) saturate(1.05)"
+          }}
+        />
+
+        {/* Mobile High Quality Thumbnail Placeholder */}
+        <div 
+          className={`block md:hidden absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat transition-opacity duration-1000 scale-[1.25] ${
+            isVideoPlaying ? "opacity-0 pointer-events-none" : "opacity-95"
+          }`}
+          style={{ 
+            backgroundImage: `url(https://img.youtube.com/vi/${mobileYoutubeId}/maxresdefault.jpg)`,
+            filter: "brightness(0.95) contrast(1.05) saturate(1.05)"
+          }}
         />
       </div>
 
