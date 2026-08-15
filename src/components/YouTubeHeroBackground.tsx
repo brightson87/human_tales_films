@@ -78,7 +78,7 @@ export const YouTubeHeroBackground: React.FC<YouTubeHeroBackgroundProps> = ({
                   } catch {}
                 }, 200);
 
-                setTimeout(() => clearInterval(checkReady), 6000);
+                setTimeout(() => clearInterval(checkReady), 12000);
 
                 // Smoothly upgrade quality to 1080p once the video is streaming
                 setTimeout(() => {

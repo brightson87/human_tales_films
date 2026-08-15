@@ -53,12 +53,12 @@ export const PagePreloader: React.FC<PagePreloaderProps> = ({
     }
   }, [minTimeElapsed, isVideoReady]);
 
-  // Safety fallback after 4.5s
+  // Safety fallback after 10s to accommodate slower mobile networks
   useEffect(() => {
     const safetyTimer = setTimeout(() => {
       setMinTimeElapsed(true);
       setProgress(100);
-    }, 4500);
+    }, 10000);
     return () => clearTimeout(safetyTimer);
   }, []);
 
