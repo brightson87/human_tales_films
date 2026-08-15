@@ -14,7 +14,7 @@ import { CallToAction } from "../components/CallToAction";
 import { Footer } from "../components/Footer";
 import { VideoModal } from "../components/VideoModal";
 import { BookingModal } from "../components/BookingModal";
-import { PagePreloader } from "../components/PagePreloader";
+
 import { FilmProject, Director, SITE_DATA } from "../data/siteData";
 
 export default function Home() {
@@ -27,7 +27,7 @@ export default function Home() {
   const [bookingModalMode, setBookingModalMode] = useState<"booking" | "hotline">("booking");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
-  const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
+
 
   // Toggle Audio in HUD
   const handleToggleAudio = () => {
@@ -72,8 +72,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#060708] text-[#f2f4f6] relative overflow-hidden font-sans">
-      {/* Cinematic Studio Brand Preloader synced with background video */}
-      <PagePreloader isVideoReady={isHeroVideoReady} />
+
 
       {/* Viewfinder Camera Diagnostics HUD */}
       <CameraHUD isAudioOn={isAudioOn} onToggleAudio={handleToggleAudio} />
@@ -82,7 +81,7 @@ export default function Home() {
       <HeroSection
         isAudioOn={isAudioOn}
         onOpenMasterReel={handleOpenMasterReel}
-        onVideoReady={() => setIsHeroVideoReady(true)}
+
       />
 
       {/* Continuous Client Marquee */}
