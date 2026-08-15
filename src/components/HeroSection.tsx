@@ -134,22 +134,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         </div>
       </div>
 
-      {/* Master Reel Trigger Button */}
-      <div className="relative z-20 flex justify-center w-full">
-        <button
-          onClick={onOpenMasterReel}
-          className="group relative inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-black/60 hover:bg-[#ff4d15] border border-white/20 hover:border-[#ff4d15] backdrop-blur-xl text-white font-mono text-xs tracking-widest uppercase transition-all duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.6)] hover:shadow-[0_0_25px_rgba(255,77,21,0.5)] transform hover:scale-105"
-        >
-          <div className="w-6 h-6 rounded-full bg-[#ff4d15] group-hover:bg-white text-black flex items-center justify-center transition-colors">
-            <Play size={10} className="fill-current translate-x-[1px]" />
-          </div>
-          <span className="font-bold">WATCH 2026 MASTER REEL</span>
-          <span className="text-white/40 group-hover:text-white/80">//</span>
-          <span className="text-[#ff4d15] group-hover:text-white font-bold">
-            {SITE_DATA.hero.masterReelDuration}
-          </span>
-        </button>
-      </div>
+
 
       {/* Bottom Viewfinder Framing Bracket Accents */}
       <div className="w-full flex justify-between items-end pointer-events-none z-10 opacity-40">
